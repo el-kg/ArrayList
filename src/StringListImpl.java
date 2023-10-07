@@ -1,147 +1,146 @@
+import exceptions.ArrayIsFullException;
+import exceptions.ElementNotFoundException;
 import exceptions.IncorrectIndexException;
+import exceptions.NullItemException;
 
 import java.util.Arrays;
 
+import static java.lang.System.*;
+
 public class StringListImpl implements StringList {
-    private final String[] array = new String[5];
-    private int pointer = 0;
+    public final String[] array;
+    private int size = 0;
 
     public StringListImpl() {
-
+        array = new String[5];
     }
 
+    public StringListImpl(int desiredSize) {
+        array = new String[desiredSize];
+    }
+
+    @Override
     public String add(String item) {
-        String[] result = Arrays.copyOf(array, array.length + 1);
-        array[pointer++] = item;
-        return array[pointer];
+        validateSize();
+        validateItem(item);
+        array[size++] = item;
+        return item;
     }
 
+    @Override
     public String add(int index, String item) {
-        if (index > pointer) {
-            throw new IncorrectIndexException("Нет элемента с таким индексом!!!");
+        validateSize();
+        validateItem(item);
+        validateIndex(index);
+        if (index == size) {
+            array[size++] = item;
+            return item;
         }
-        String[] result = new String[array.length + 1];
-        for (int i = 0; i < index; i++) {
-                result[i] = array[i];
-            }
-                result[index] = item;
-
-        for (int i = index + 1; i <= array.length; i++) {
-                result[i] = array[i - 1];
-            }
-        pointer++;
-        return array[index];
-    }
-
-    public void set(int index, String item) {
-        if (index > pointer) {
-            throw new IncorrectIndexException("Нет элемента с таким индексом!!!");
-        }
+        arraycopy(array, index, array, index + 1, size - index);
         array[index] = item;
+        size++;
+        return item;
     }
 
+    @Override
+    public String set(int index, String item) {
+        validateIndex(index);
+        validateItem(item);
+        array[index] = item;
+        return item;
+    }
+
+    @Override
     public String remove(String item) {
-        String[] result = new String[array.length];
-        for (int i = 0, j = 0; i < array.length; j++, i++) {
-            if ((array[i].equals(item))) {
-                return array[i];
-                i++;
-               // result[j] = array[i];
-            } else {
-                throw new IncorrectIndexException("Подобный элемент отсутствует в списке!!!");
-            }
-            result[j] = array[i];
-        }
-        pointer--;
-        return null;
+        validateItem(item);
+        int index = indexOf(item);
+        return remove(index);
     }
 
+    @Override
     public String remove(int index) {
-        if (index > pointer) {
-            throw new IncorrectIndexException("Нет элемента с таким индексом!!!");
+        validateIndex(index);
+        String item = array[index];
+        if (index != size) {
+            System.arraycopy(array, index + 1, array, index, size - index);
+            size--;
         }
-        String[] result = new String[array.length];
-        if (index >= 0) System.arraycopy(array, 0, result, 0, index);
-        if (array.length + 1 - index >= 0) System.arraycopy(array, index - 1,
-                result, index, array.length + 1 - index);
-        pointer--;
-        return result[index];
-
+        return item;
     }
 
+    @Override
     public boolean contains(String item) {
-        boolean result = false;
-        for (int i = 0; i < array.length; i++) {
-            if (array[i].equals(item)) {
-                result = true;
-                break;
-            }
-        }
-        return result;
+        return indexOf(item) != -1;
     }
 
+    @Override
     public int indexOf(String item) {
-        int result = 0;
-        for (int i = 0; i < array.length; i++) {
+        for (int i = 0; i < size; i++) {
             if (array[i].equals(item)) {
-                result = i;
-            } else {
-                result = -1;
+                return i;
             }
         }
-        return result;
+        return -1;
     }
 
+    @Override
     public int lastIndexOf(String item) {
-        int result = 0;
-        for (int i = array.length; i > 0; i--) {
+        for (int i = size - 1; i >= 0; i--) {
             if (array[i].equals(item)) {
-                result = i;
-            } else {
-                result = -1;
+                return i;
             }
         }
-        return result;
+        return -1;
     }
 
+    @Override
     public String get(int index) {
-        if (index > pointer) {
-            throw new IncorrectIndexException("Нет элемента с таким индексом!!!");
-        }
+        validateIndex(index);
         return array[index];
     }
 
-    public boolean equals(StringListImpl otherList) {
-        if (otherList.isEmpty()) {
-            throw new IncorrectIndexException("Кого-то пытаются надуть!!!");
-        }
-        return Arrays.equals(otherList.toArray(), array);
+    @Override
+    public boolean equals(StringList otherList) {
+        return Arrays.equals(this.toArray(), otherList.toArray());
     }
 
+    @Override
     public int size() {
-        return pointer;
+        return size;
     }
 
-
+    @Override
     public boolean isEmpty() {
-        if (pointer == 0) {
-            return true;
-        } else {
-            return false;
-        }
+        return size == 0;
     }
 
+    @Override
     public void clear() {
-        for (int i = 0; i < array.length; i++) {
-            array[i] = null;
-            pointer--;
+        size = 0;
+    }
+
+    @Override
+    public String[] toArray() {
+        return Arrays.copyOf(array, size);
+    }
+
+    private void validateItem(String item) {
+        if (item == null) {
+            throw new NullItemException("!!!");
         }
     }
 
-    public String[] toArray() {
-        return array;
+    private void validateSize() {
+        if (size == array.length) {
+            throw new ArrayIsFullException("Нет больше места!!!");
+        }
+    }
+
+    private void validateIndex(int index) {
+        if (index < 0 || index > array.length) throw new IncorrectIndexException("Нет элемента с таким индексом!!!");
     }
 }
+
 
 
 
